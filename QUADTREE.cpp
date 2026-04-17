@@ -14,6 +14,16 @@ struct Box {
         //checks if its inside
         return (d.x >= x && d.x <= x + size && d.y >= y && d.y <= y + size);
     }
+    // this code checks ifg the boxes are touching. it checks top side and bottom and sees if it touches/ overlaps
+    bool intersects(Box range) {
+    if (range.x > x + size || x > range.x + range.size) {
+        return false;
+    }
+    if (range.y > y + size || y > range.y + range.size) {
+        return false;
+    }
+    return true;
+}
 };
 
 class QuadTree {
@@ -32,7 +42,27 @@ public:
         sw = nullptr;
         se = nullptr;
     }
-    
+
+    // if the boxes are touching it loops through list of dots to see if they are nside searchg  square
+    void query(Box range, vector<Dot>& found) {
+    if (box.intersects(range) == false) {
+        return;
+    }
+
+    for (int i = 0; i < dots.size(); i++) {
+        Dot d = dots[i];
+        if (range.contains(d)) {
+            found.push_back(d);
+        }
+    }
+
+    if (divided == true) {
+        nw->query(range, found);
+        ne->query(range, found);
+        sw->query(range, found);
+        se->query(range, found);
+    }
+}
     ~QuadTree() { 
         delete nw; 
         delete ne; 
@@ -118,5 +148,25 @@ int main() {
     auto t4 = chrono::high_resolution_clock::now();
     cout << "QuadTree Time: " << chrono::duration_cast<chrono::milliseconds>(t4 - t3).count() << " ms\n";
     //------------------------------------------------------------------------------------------------
+
+
+    // this code searches the entire search area for dots
+    // this is the search query
+    
+    Box searchArea;
+    searchArea.x = 400;
+    searchArea.y = 400;
+    searchArea.size = 100;
+
+    vector<Dot> results;
+    // we run stopwatch to see how long it takes to search for the dots. this shows how fast it is
+    auto t_start = chrono::high_resolution_clock::now();
+    tree.query(searchArea, results);
+    auto t_end = chrono::high_resolution_clock::now();
+
+    long long micro = chrono::duration_cast<chrono::microseconds>(t_end - t_start).count();
+
+    cout << "Found # " << results.size() << " dots." << endl;
+    cout << "Search time was " << micro << " microseconds" << endl;
     return 0;
 }
